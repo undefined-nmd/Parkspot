@@ -1,48 +1,60 @@
 import React, { useRef, useEffect } from 'react'
-import { View, Text, TextInput, StatusBar, Image, KeyboardAvoidingView, TextInputSubmitEditingEventData, TouchableOpacity } from 'react-native'
-import { SyntheticEvent } from 'react'
+import { View, Text, TextInput, StatusBar, Image, Keyboard, TextInputSubmitEditingEventData, TouchableOpacity, StyleSheet, Animated } from 'react-native'
 import { NavigationStackOptions } from 'react-navigation-stack'
 import MapView from 'react-native-maps'
-import BottomDrawer from 'rn-bottom-drawer'
 import Drawer from 'react-native-drawer'
 
 export default function HomeView() {
 
     const [value, onChangeText] = React.useState();
+    const [drawerContent, setDrawerContent] = React.useState( <Text style={{fontSize: 26, fontWeight: '700', color: '#3f3f3f'}}>History</Text>);
     const drawerRef = useRef(null)
 
     const closeControlPanel = () => {
+        Keyboard.dismiss()
         drawerRef.current.close()
       };
     const openControlPanel = () => {
+        setDrawerContent(<Text style={{fontSize: 26, fontWeight: '700', color: '#3f3f3f'}}>History</Text>)
         drawerRef.current.open()
       };
 
     const handleTextSubmit = (event: TextInputSubmitEditingEventData) => {
+        setDrawerContent(
+        <View style={{flex:1}}>
+            <Text style={{fontSize: 26, fontWeight: '700', color: '#3f3f3f'}}>Preferences</Text>
+            <TouchableOpacity style={styles.rectangleButtonContainer} onPress={() => closeControlPanel()}>
+                        <Text style={styles.text}> Search </Text>
+            </TouchableOpacity>
+        </View>)
         console.log(event.text)
-        closeControlPanel()
     }
-
-    useEffect(() => { 
-    }, [])
 
     return (
         <Drawer
         ref={drawerRef}
+        onCloseStart={() => Keyboard.dismiss()}
         panThreshold={0.1}
         type={'overlay'}
-        tweenDuration={240}
-        openDrawerOffset={0.1}
+        tweenDuration={250}
+        openDrawerOffset={0.05}
         closedDrawerOffset={0.1}
         negotiatePan={true}
         side={'bottom'}
-        styles={{borderRadius: 100,}}
         content={
-            <View style={{flex: 1, backgroundColor: 'white', borderRadius: 10,}}>
+            <View style={{flex: 1, backgroundColor: 'white', borderRadius: 10, shadowColor: "#000",
+            shadowOffset: {
+                width: 0,
+                height: 5,
+            },
+            shadowOpacity: 0.24,
+            shadowRadius: 4.27,
+            
+            elevation: 10,}}>
                 <View
                 style={{
                     width: 40,
-                    height: 6,
+                    height: 5,
                     margin: 8,
                     marginTop: 8,
                     borderRadius: 10,
@@ -73,9 +85,9 @@ export default function HomeView() {
                         placeholder={"Address"}
                         value={value}
                         />
-                    </View>
+                </View>
                 <View style={{flex:1, width: '93%', alignSelf:'center', padding: 6, marginTop: 20}}>
-                    <Text style={{fontSize: 26, fontWeight: '700', color: '#3f3f3f'}}>Preferences</Text>
+                    {drawerContent}
                 </View>
             </View>
         }
@@ -93,6 +105,24 @@ export default function HomeView() {
         </Drawer>
     );
 }
+
+const styles = StyleSheet.create({
+    rectangleButtonContainer: {
+        width: "60%",
+        justifyContent: "center",
+        alignItems: "center",
+        alignSelf: 'center',
+        marginBottom: 200,
+        backgroundColor: '#48ed39',
+        height: 50,
+        marginTop: 20,
+        borderRadius: 7,
+    },
+    text: {
+        color: "#FFF",
+        fontSize: 24,
+    }
+});
 
 const navigationOptions: NavigationStackOptions = {
     header: null
