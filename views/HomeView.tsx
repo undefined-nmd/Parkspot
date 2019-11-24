@@ -4,6 +4,7 @@ import { NavigationStackOptions } from 'react-navigation-stack'
 import MapView from 'react-native-maps'
 import Drawer from 'react-native-drawer'
 import QuickPicker from 'quick-picker'
+import Constants from 'expo-constants'
 
 // Own Components
 import SearchBar from '../components/SearchBar'
@@ -13,8 +14,10 @@ import Preferences from '../components/Preferences'
 export default function HomeView() {
 
     const [drawerContent, setDrawerContent] = React.useState( <Text style={styles.heading}>History</Text>)
+    const [drawerDisabled, setDrawerDisabled] = React.useState(false)
     const ZONES = ['City', 'Edge of city', 'Outside city', 'Park & Ride']
     const drawerRef = useRef(null)
+    let closedDrawerOffset = 0.106
 
     const closeControlPanel = () => {
         Keyboard.dismiss()
@@ -33,29 +36,30 @@ export default function HomeView() {
         });
     }
 
-
     const handleTextSubmit = (event: TextInputSubmitEditingEventData) => {
         if(event.text != "") {
-            setDrawerContent(<Preferences showPicker={showPicker} closeDrawer={closeControlPanel} />)
+            setDrawerContent(<Preferences onScrollviewAtStart={setDrawerDisabled} showPicker={showPicker} closeDrawer={closeControlPanel} />)
             console.log(event.text)
         }
     }
 
     const handleEmptyTextInput = () => {
-        setDrawerContent(<Text style={{fontSize: 26, fontWeight: '700', color: '#3f3f3f'}}>History</Text>)
+        setDrawerContent(<Text style={styles.heading}>History</Text>)
     }
 
     return (
         <View style={{flex:1}}>
             <Drawer
             ref={drawerRef}
+            disabled={drawerDisabled}
             onCloseStart={() => Keyboard.dismiss()}
             panThreshold={0.1}
             type={'overlay'}
             tweenDuration={280}
             openDrawerOffset={0.05}
-            closedDrawerOffset={0.1}
+            closedDrawerOffset={closedDrawerOffset}
             negotiatePan={true}
+            useInteractionManager={true}
             side={'bottom'}
             content={
                 <View style={styles.drawer}>
@@ -111,7 +115,7 @@ const styles = StyleSheet.create({
         width: '93%',
         alignSelf:'center',
         padding: 6,
-        marginTop: 20
+        marginTop: 4
     },
     map: {
         flex: 1,
@@ -121,14 +125,15 @@ const styles = StyleSheet.create({
     heading: {
         fontSize: 26,
         fontWeight: '700',
-        color: '#3f3f3f'
+        color: '#3f3f3f',
+        marginTop: 20
     },
     listItemRowContainer: {
         flex: 1,
         flexDirection: "row",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: 20,
+        padding: 0,
     },
     value: {
         color: "#007FFF",
