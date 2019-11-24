@@ -1,16 +1,19 @@
 import React, { useRef, useEffect } from 'react'
-import { View, Text, StatusBar, Keyboard, TextInputSubmitEditingEventData, TouchableOpacity, StyleSheet } from 'react-native'
+import { View, Text, StatusBar, Keyboard, TextInputSubmitEditingEventData, TouchableOpacity, StyleSheet, Picker, DatePickerIOS } from 'react-native'
 import { NavigationStackOptions } from 'react-navigation-stack'
 import MapView from 'react-native-maps'
 import Drawer from 'react-native-drawer'
+import QuickPicker from 'quick-picker'
 
 // Own Components
 import SearchBar from '../components/SearchBar'
 import MovableIndicator from '../components/MovableIndicator'
+import Preferences from '../components/Preferences'
 
 export default function HomeView() {
 
-    const [drawerContent, setDrawerContent] = React.useState( <Text style={{fontSize: 26, fontWeight: '700', color: '#3f3f3f'}}>History</Text>);
+    const [drawerContent, setDrawerContent] = React.useState( <Text style={styles.heading}>History</Text>)
+    const ZONES = ['City', 'Edge of city', 'Outside city', 'Park & Ride']
     const drawerRef = useRef(null)
 
     const closeControlPanel = () => {
@@ -19,17 +22,21 @@ export default function HomeView() {
       };
     const openControlPanel = () => {
         drawerRef.current.open()
-      };
+    }
+
+    const showPicker = (zone: string, setZone: React.Dispatch<React.SetStateAction<string>>) => {
+        Keyboard.dismiss()
+        QuickPicker.open({ 
+            items: ZONES,
+            selectedValue: zone, // this could be this.state.selectedLetter as well.
+            onValueChange: (selectedValueFromPicker: string) => setZone(selectedValueFromPicker),
+        });
+    }
+
 
     const handleTextSubmit = (event: TextInputSubmitEditingEventData) => {
         if(event.text != "") {
-            setDrawerContent(
-                <View style={{flex:1}}>
-                    <Text style={{fontSize: 26, fontWeight: '700', color: '#3f3f3f'}}>Preferences</Text>
-                    <TouchableOpacity style={styles.rectangleButtonContainer} onPress={() => closeControlPanel()}>
-                                <Text style={styles.text}> Search </Text>
-                    </TouchableOpacity>
-                </View>)
+            setDrawerContent(<Preferences showPicker={showPicker} closeDrawer={closeControlPanel} />)
             console.log(event.text)
         }
     }
@@ -39,31 +46,34 @@ export default function HomeView() {
     }
 
     return (
-        <Drawer
-        ref={drawerRef}
-        onCloseStart={() => Keyboard.dismiss()}
-        panThreshold={0.1}
-        type={'overlay'}
-        tweenDuration={280}
-        openDrawerOffset={0.05}
-        closedDrawerOffset={0.1}
-        negotiatePan={true}
-        side={'bottom'}
-        content={
-            <View style={styles.drawer}>
-                <MovableIndicator/>
-                <SearchBar onFocus={openControlPanel} onSubmit={handleTextSubmit} onEmpty={handleEmptyTextInput} />
-                <View style={styles.drawerContentContainer}>
-                    {drawerContent}
+        <View style={{flex:1}}>
+            <Drawer
+            ref={drawerRef}
+            onCloseStart={() => Keyboard.dismiss()}
+            panThreshold={0.1}
+            type={'overlay'}
+            tweenDuration={280}
+            openDrawerOffset={0.05}
+            closedDrawerOffset={0.1}
+            negotiatePan={true}
+            side={'bottom'}
+            content={
+                <View style={styles.drawer}>
+                    <MovableIndicator/>
+                    <SearchBar onFocus={openControlPanel} onSubmit={handleTextSubmit} onEmpty={handleEmptyTextInput} />
+                    <View style={styles.drawerContentContainer}>
+                        {drawerContent}
+                    </View>
                 </View>
-            </View>
-        }
-        >
-            <View style={{ flex:1 }} >
-                <StatusBar barStyle="dark-content"/>
-                <MapView style={styles.map} />
-            </View>
-        </Drawer>
+            }
+            >
+                <View style={{ flex:1 }} >
+                    <StatusBar barStyle="dark-content"/>
+                    <MapView style={styles.map} />
+                </View>
+            </Drawer>
+            <QuickPicker/>
+        </View>
     );
 }
 
@@ -108,10 +118,25 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
-});
+    heading: {
+        fontSize: 26,
+        fontWeight: '700',
+        color: '#3f3f3f'
+    },
+    listItemRowContainer: {
+        flex: 1,
+        flexDirection: "row",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: 20,
+    },
+    value: {
+        color: "#007FFF",
+    },
+})
 
 const navigationOptions: NavigationStackOptions = {
     header: null
-  };
+}
 
-  HomeView.navigationOptions  = navigationOptions
+HomeView.navigationOptions  = navigationOptions

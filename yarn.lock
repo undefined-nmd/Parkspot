@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@appandflow/touchable@^1.2.1":
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@appandflow/touchable/-/touchable-1.2.2.tgz#134b6353e5ec98c5d6937116aa79dfede20166e1"
+  integrity sha1-E0tjU+XsmMXWk3EWqnnf7eIBZuE=
+
 "@babel/code-frame@^7.0.0", "@babel/code-frame@^7.5.5":
   version "7.5.5"
   resolved "https://registry.yarnpkg.com/@babel/code-frame/-/code-frame-7.5.5.tgz#bc0782f6d69f7b7d49531219699b988f669a8f9d"
@@ -4196,6 +4201,13 @@ querystringify@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/querystringify/-/querystringify-2.1.1.tgz#60e5a5fd64a7f8bfa4d2ab2ed6fdf4c85bad154e"
   integrity sha512-w7fLxIRCRT7U8Qu53jQnJyPkYZIaR4n5151KMfcJlO/A9397Wxb1amJvROTK6TOnp7PfoAmg/qXiNHI+08jRfA==
+
+quick-picker@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/quick-picker/-/quick-picker-1.5.0.tgz#0b8e27b92f1fbda52b6cdc66e798ca535a0273ce"
+  integrity sha512-UWMEfraD6CRZz9e7wYlOw0hOm6u63xnxuRSpwX0QwmZK08TRLkk0nL1ehtzqicVCe3MHDgFXQlsC0JFKGVe2SQ==
+  dependencies:
+    "@appandflow/touchable" "^1.2.1"
 
 randomatic@^3.0.0:
   version "3.1.1"
