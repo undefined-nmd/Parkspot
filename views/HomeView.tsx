@@ -10,16 +10,19 @@ import Constants from 'expo-constants'
 import SearchBar from '../components/SearchBar'
 import MovableIndicator from '../components/MovableIndicator'
 import Preferences from '../components/Preferences'
+import Parkings from '../components/Parkings'
 
 export default function HomeView() {
 
     const [drawerContent, setDrawerContent] = React.useState( <Text style={styles.heading}>History</Text>)
+    const [content, setContent] = React.useState()
     const [drawerDisabled, setDrawerDisabled] = React.useState(false)
     const ZONES = ['City', 'Edge of city', 'Outside city', 'Park & Ride']
     const drawerRef = useRef(null)
     let closedDrawerOffset = 0.106
 
     const closeControlPanel = () => {
+        setContent(<Parkings/>)
         Keyboard.dismiss()
         drawerRef.current.close()
       };
@@ -31,7 +34,7 @@ export default function HomeView() {
         Keyboard.dismiss()
         QuickPicker.open({ 
             items: ZONES,
-            selectedValue: zone, // this could be this.state.selectedLetter as well.
+            selectedValue: zone,
             onValueChange: (selectedValueFromPicker: string) => setZone(selectedValueFromPicker),
         });
     }
@@ -45,6 +48,7 @@ export default function HomeView() {
 
     const handleEmptyTextInput = () => {
         setDrawerContent(<Text style={styles.heading}>History</Text>)
+        setContent(null)
     }
 
     return (
@@ -71,9 +75,10 @@ export default function HomeView() {
                 </View>
             }
             >
-                <View style={{ flex:1 }} >
+                <View style={{ flex: 1, justifyContent: 'flex-end' }} >
                     <StatusBar barStyle="dark-content"/>
                     <MapView style={styles.map} />
+                    {content}
                 </View>
             </Drawer>
             <QuickPicker/>
@@ -104,9 +109,9 @@ const styles = StyleSheet.create({
         shadowColor: "#000",
         shadowOffset: {
             width: 0,
-            height: 5,
+            height: -5,
         },
-        shadowOpacity: 0.24,
+        shadowOpacity: 0.08,
         shadowRadius: 4.27,
         elevation: 10,
     },
@@ -118,6 +123,7 @@ const styles = StyleSheet.create({
         marginTop: 4
     },
     map: {
+        position: 'absolute',
         flex: 1,
         width: '100%',
         height: '100%',
