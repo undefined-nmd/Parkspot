@@ -12,7 +12,7 @@ export default function Parkings(props) {
             <View style={styles.card}>
                 <Text style={styles.heading}>{ item.item.title }</Text>
             </View>
-        );
+        )
     }
 
     return (

@@ -11,10 +11,15 @@ export default function SearchBar(props) {
         }
     },[value])
 
+    useEffect(() => {
+        onChangeText(props.value)
+    },[props.value])
+
     return (
         <View style={styles.container}>
             <Image style={{width: 22, height: 22}} source={require('../assets/icons8-search.png')}/>
             <TextInput
+            value={value}
             onFocus={props.onFocus}
             returnKeyType={'done'}
             onSubmitEditing={event => props.onSubmit(event.nativeEvent)}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text, TouchableOpacity, View, StyleSheet, Switch, ScrollView } from 'react-native';
+import { Text, TouchableOpacity, View, StyleSheet, Switch, ScrollView, AsyncStorage } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux'
 
 import SnapSlider from 'react-native-snap-slider'
@@ -33,6 +33,78 @@ export default function Preferences(props) {
             props.onScrollviewAtStart(true)
         }
     },[scrollviewOffset])
+
+    const setLSItem = async (key: string, value: string) => {
+        try {
+            await AsyncStorage.setItem(key, value)
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const getLSItem = async (key: string) => {
+        try {
+            const value = await AsyncStorage.getItem(key)
+            if(value != null)
+                return value
+            else
+                return false
+        } catch (error) {
+            console.log(error)
+        }
+    }
+
+    const addSearchToHistory = () => {
+        getLSItem('History')
+        .then((result) => {
+            let historyArray = []
+            if(result) {
+                historyArray = JSON.parse(result)
+                if(!historyArray.includes(props.destinationAddress)) {
+                    historyArray.push(props.destinationAddress)
+                    setLSItem('History', JSON.stringify(historyArray))
+                }
+            } else {
+                historyArray.push(props.destinationAddress)
+                setLSItem('History', JSON.stringify(historyArray))
+            }
+        })
+    }
+
+    const handlePreferencesSubmit = async() => {
+        addSearchToHistory()
+
+        let data = {
+            "destinationGeo": {
+                "long": props.region.longitude,
+                "lat": props.region.latitude
+            },
+            "userId": "",
+            "settings": {
+                "zonename": zone,
+                "price_per_hour" : price,
+                "distance_from_destination" : distance,
+                "bankcontact" : bancontactAvailable,
+                "low_emission_zone" : avoidLez,
+                "underground" : avoidUnderground
+            }
+        }
+
+        fetch("http://192.168.5.136:8080/api/v1/searchparkingspots",
+        {
+            method: 'POST',
+            body: JSON.stringify(data),
+            headers: {
+              'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then((responseJson)=> {
+            console.log(responseJson)
+        })
+        .catch(error=>console.log(error)) 
+        props.closeDrawer()
+    }
 
     return ( 
         <ScrollView style={styles.container} scrollEventThrottle={1} onScroll={(event) => setOffset(event.nativeEvent.contentOffset.y)}>
@@ -80,7 +152,7 @@ export default function Preferences(props) {
                 <Switch trackColor={{true: '#30d158', false:'none'}} onValueChange={(value) => setAvoidUnderground(value)} value={avoidUnderground} />
             </View>
 
-            <TouchableOpacity style={styles.rectangleButtonContainer} onPress={() => props.closeDrawer()}>
+            <TouchableOpacity style={styles.rectangleButtonContainer} onPress={() => handlePreferencesSubmit()}>
                         <Text style={styles.text}> Search </Text>
             </TouchableOpacity>
         </ScrollView>
