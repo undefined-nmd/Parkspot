@@ -61,7 +61,9 @@ export default function Preferences(props) {
             if(result) {
                 historyArray = JSON.parse(result)
                 if(!historyArray.includes(props.destinationAddress)) {
-                    historyArray.push(props.destinationAddress)
+                    if(historyArray.length >= 5)
+                        historyArray.pop()
+                    historyArray.unshift(props.destinationAddress) 
                     setLSItem('History', JSON.stringify(historyArray))
                 }
             } else {
@@ -86,7 +88,7 @@ export default function Preferences(props) {
                 "distance_from_destination" : distance,
                 "bankcontact" : bancontactAvailable,
                 "low_emission_zone" : avoidLez,
-                "underground" : avoidUnderground
+                "underground" : !avoidUnderground
             }
         }
 
@@ -100,7 +102,7 @@ export default function Preferences(props) {
         })
         .then(response => response.json())
         .then((responseJson)=> {
-            console.log(responseJson)
+            props.setResults(responseJson)
         })
         .catch(error=>console.log(error)) 
         props.closeDrawer()

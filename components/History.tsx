@@ -12,11 +12,18 @@ export default function History(props) {
         getSearchHistory()
     },[])
 
+    useEffect(() => {
+        if(scrollviewOffset === 0) {
+            props.onScrollviewAtStart(false)
+        } else {
+            props.onScrollviewAtStart(true)
+        }
+    },[scrollviewOffset])
+
     const getSearchHistory = () => {
         getLSItem('History')
         .then((result) => {
             const searches = JSON.parse(result)
-            console.log(searches)
             setHistory(searches)
         })
     }

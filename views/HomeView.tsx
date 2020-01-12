@@ -1,7 +1,7 @@
-import React, { useRef, useEffect } from 'react'
+import React, { useRef, useEffect, useState } from 'react'
 import { View, Text, StatusBar, Keyboard, TextInputSubmitEditingEventData, TouchableOpacity, StyleSheet, Picker, DatePickerIOS } from 'react-native'
 import { NavigationStackOptions } from 'react-navigation-stack'
-import MapView from 'react-native-maps'
+import MapView, { Marker } from 'react-native-maps'
 import Drawer from 'react-native-drawer'
 import QuickPicker from 'quick-picker'
 
@@ -15,8 +15,12 @@ import History from '../components/History'
 export default function HomeView() {
 
     const [content, setContent] = React.useState()
-    const [markers, setMarkers] = React.useState()
+    const [parkingIndex, setParkingIndex] = React.useState(0)
+    const [markers, setMarkers] = React.useState([])
+    const [destinationMarker, setDestinationMarker] = useState()
+    const [parkings, setParkings] = React.useState([])
     const [drawerDisabled, setDrawerDisabled] = React.useState(false)
+    const [pressedIndex, setPressedId] = React.useState(false)
     const [destinationAddress, setDestinationAddress] = React.useState(null)
     const [region, setRegion] = React.useState({
         latitude: 51.0543422,
@@ -27,26 +31,46 @@ export default function HomeView() {
     
     const ZONES = ['City', 'Edge of city', 'Outside city', 'Park & Ride']
     const drawerRef = useRef(null)
+    const mapRef = useRef(null)
+    const carouselRef = useRef(null)
     let closedDrawerOffset = 0.106
 
     useEffect(() => {
-        console.log('search changed')
         if(destinationAddress != null) {
             getCoordinatesAndFocusMap(destinationAddress)
         }
+        return
     },[destinationAddress])
+
+    useEffect(() => {
+        if(parkings.length > 0)
+            mapRef.current.fitToElements(true)
+        return
+    },[markers])
+
+    useEffect(() => {
+        if(pressedIndex) {
+            carouselRef.current.goToItem(pressedIndex)
+        }
+        return
+    },[pressedIndex])
 
     const getCoordinatesAndFocusMap = (address: string) => {
         fetch(`https://roadreport.osoc.be//best@/search?text=${address}`)
-        .then(response => response.json())    // one extra step
+        .then(response => response.json())
         .then(data => {
-            console.log(data.features[0].geometry.coordinates)
             setRegion({
                 latitude: data.features[0].geometry.coordinates[1],
                 longitude: data.features[0].geometry.coordinates[0],
                 latitudeDelta: 0.022,
                 longitudeDelta: 0.0221,
             })
+            let coordinates = {
+                latitude: data.features[0].geometry.coordinates[1],
+                longitude: data.features[0].geometry.coordinates[0],
+              }
+
+            setDestinationMarker(<Marker image={require('../assets/redMarker.png')} coordinate={coordinates}/>)
         })
         .catch(error => {
             return error
@@ -54,7 +78,6 @@ export default function HomeView() {
     }
 
     const closeControlPanel = () => {
-        setContent(<Parkings/>)
         Keyboard.dismiss()
         drawerRef.current.close()
       };
@@ -71,21 +94,55 @@ export default function HomeView() {
         });
     }
 
+    const changeMarkers = (index) => {
+        let markersArray = []
+        parkings.forEach(parking => {
+            if(parking) {
+                markersArray.push({
+                    latitude: parking.coordinates.lat,
+                    longitude: parking.coordinates.long
+                })
+            }
+        })
+        setMarkers(markersArray)
+        fitToMarkers()
+    }
+
+    const handleApiResults = (data) => {
+        setParkings(data)
+    }
+
+    const fitToMarkers = () => {
+        mapRef.current.fitToElements(true)
+    }
+
+    useEffect(() => {
+        if(parkings.length) {
+            setContent(<Parkings ref={carouselRef} pressedIndex={pressedIndex} markers={markers} lookingAtParkingIndex={setParkingIndex} setMarkers={setMarkers} items={parkings}/>)
+            changeMarkers(parkingIndex)
+            fitToMarkers()
+            
+        } else
+            setContent([])
+        return
+    }, [parkings])
+
     const handleTextSubmit = (search: string) => {
-        console.log(search)
         if(search != "") {
-            setDrawerContent(<Preferences onScrollviewAtStart={setDrawerDisabled} destinationAddress={search} region={region} showPicker={showPicker} closeDrawer={closeControlPanel} />)
+            setDrawerContent(<Preferences setResults={(data) => handleApiResults(data)} onScrollviewAtStart={setDrawerDisabled} destinationAddress={search} region={region} showPicker={showPicker} closeDrawer={closeControlPanel} />)
         }
         setDestinationAddress(search)
     }
 
     const handleEmptyTextInput = () => {
         setDrawerDisabled(false)
-        setDrawerContent(<History onPressSearch={handleTextSubmit}/>)
+        setDestinationAddress("")
+        setMarkers([])
+        setDrawerContent(<History onScrollviewAtStart={setDrawerDisabled} onPressSearch={handleTextSubmit}/>)
         setContent(null)
     }
 
-    const [drawerContent, setDrawerContent] = React.useState( <History onPressSearch={handleTextSubmit}/>)
+    const [drawerContent, setDrawerContent] = React.useState( <History onScrollviewAtStart={setDrawerDisabled} onPressSearch={handleTextSubmit}/>)
 
     return (
         <View style={{flex:1}}>
@@ -113,8 +170,13 @@ export default function HomeView() {
             >
                 <View style={{ flex: 1, justifyContent: 'flex-end' }} >
                     <StatusBar barStyle="dark-content"/>
-                    <MapView style={styles.map} region={region}>
-                        {markers}
+                    <MapView provider={'google'} style={styles.map2} region={region} ref={mapRef} mapPadding={{ top: 80, right: 10, bottom: 320, left: 10 }}>
+                    {destinationMarker}
+                    {markers.map((result, i) => {     
+                        return (
+                        <Marker onPress={(e) => setPressedId(e.nativeEvent.id)} image={require('../assets/blueMarker.png')}  identifier={i.toString()} key={i} coordinate={result}/>
+                        ) 
+                    })}
                     </MapView>
                     {content}
                 </View>
@@ -161,6 +223,11 @@ const styles = StyleSheet.create({
         marginTop: 4
     },
     map: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    map2: {
         position: 'absolute',
         flex: 1,
         width: '100%',
