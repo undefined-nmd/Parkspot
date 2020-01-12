@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react'
-import { View, Text, StatusBar, Keyboard, TextInputSubmitEditingEventData, TouchableOpacity, StyleSheet, Picker, DatePickerIOS } from 'react-native'
+import { View, Text, StatusBar, Keyboard, TextInputSubmitEditingEventData, TouchableOpacity, StyleSheet, Picker, ActivityIndicator, Alert } from 'react-native'
 import { NavigationStackOptions } from 'react-navigation-stack'
 import MapView, { Marker } from 'react-native-maps'
 import Drawer from 'react-native-drawer'
@@ -15,6 +15,8 @@ import History from '../components/History'
 export default function HomeView() {
 
     const [content, setContent] = React.useState()
+    const [loadingDisplay, setLoadingDisplay] = useState("none")
+    const [isLoading, setIsLoading] = useState(false)
     const [parkingIndex, setParkingIndex] = React.useState(0)
     const [markers, setMarkers] = React.useState([])
     const [destinationMarker, setDestinationMarker] = useState()
@@ -22,13 +24,7 @@ export default function HomeView() {
     const [drawerDisabled, setDrawerDisabled] = React.useState(false)
     const [pressedIndex, setPressedId] = React.useState(false)
     const [destinationAddress, setDestinationAddress] = React.useState(null)
-    const [region, setRegion] = React.useState({
-        latitude: 51.0543422,
-        longitude: 3.7274243,
-        latitudeDelta: 0.122,
-        longitudeDelta: 0.0321,
-      })
-    
+    const [camera, setCamera] = React.useState({"center": { latitude: 51.0543422, longitude: 3.7274243}, "heading": 0,"pitch": 0, "zoom": 10, "altitude": 0})
     const ZONES = ['City', 'Edge of city', 'Outside city', 'Park & Ride']
     const drawerRef = useRef(null)
     const mapRef = useRef(null)
@@ -43,34 +39,70 @@ export default function HomeView() {
     },[destinationAddress])
 
     useEffect(() => {
-        if(parkings.length > 0)
+        if(parkings.length > 0) {
             mapRef.current.fitToElements(true)
+        }
         return
     },[markers])
 
     useEffect(() => {
         if(pressedIndex) {
             carouselRef.current.goToItem(pressedIndex)
+            mapRef.current.getCamera()
+            .then((result) => {
+                let camera = result
+                camera.center.latitude = parkings[pressedIndex].coordinates.lat
+                camera.center.longitude = parkings[pressedIndex].coordinates.long
+                camera.zoom = 15.4
+                mapRef.current.animateCamera(camera)
+            })
         }
         return
     },[pressedIndex])
+
+    useEffect(() => {
+        if(parkings[parkingIndex] != undefined) {
+            mapRef.current.getCamera()
+            .then((result) => {
+                let camera = result
+                camera.center.latitude = parkings[parkingIndex].coordinates.lat
+                camera.center.longitude = parkings[parkingIndex].coordinates.long
+                camera.zoom = 15.4
+                mapRef.current.animateCamera(camera)
+            })
+        }
+        return
+    },[parkingIndex])
+
+    const startLoading = () => {
+        setLoadingDisplay("flex")
+        setIsLoading(true)
+    }
+
+    const stopLoading = () => {
+        setLoadingDisplay("none")
+        setIsLoading(false)
+    }
 
     const getCoordinatesAndFocusMap = (address: string) => {
         fetch(`https://roadreport.osoc.be//best@/search?text=${address}`)
         .then(response => response.json())
         .then(data => {
-            setRegion({
-                latitude: data.features[0].geometry.coordinates[1],
-                longitude: data.features[0].geometry.coordinates[0],
-                latitudeDelta: 0.022,
-                longitudeDelta: 0.0221,
-            })
             let coordinates = {
                 latitude: data.features[0].geometry.coordinates[1],
                 longitude: data.features[0].geometry.coordinates[0],
-              }
+            }
 
-            setDestinationMarker(<Marker image={require('../assets/redMarker.png')} coordinate={coordinates}/>)
+            mapRef.current.getCamera()
+            .then((result) => {
+                let camera = result
+                camera.center = coordinates
+                camera.altitude = 0
+                camera.zoom = 14
+                mapRef.current.animateCamera(camera)
+                setCamera(camera)
+                setDestinationMarker(<Marker image={require('../assets/redMarker.png')} coordinate={coordinates}/>)
+            })
         })
         .catch(error => {
             return error
@@ -94,7 +126,7 @@ export default function HomeView() {
         });
     }
 
-    const changeMarkers = (index) => {
+    const showMarkers = () => {
         let markersArray = []
         parkings.forEach(parking => {
             if(parking) {
@@ -109,6 +141,18 @@ export default function HomeView() {
     }
 
     const handleApiResults = (data) => {
+        if(data.length == 0) {
+            Alert.alert(
+                'No Parkings Found.',
+                'There are no parkingspots available with your selected preferences, try another configuration.',
+                [
+                    {text: 'OK', onPress: () => stopLoading()},
+                ],
+                {cancelable: false},
+            )
+
+        }
+        stopLoading()
         setParkings(data)
     }
 
@@ -119,22 +163,27 @@ export default function HomeView() {
     useEffect(() => {
         if(parkings.length) {
             setContent(<Parkings ref={carouselRef} pressedIndex={pressedIndex} markers={markers} lookingAtParkingIndex={setParkingIndex} setMarkers={setMarkers} items={parkings}/>)
-            changeMarkers(parkingIndex)
+            showMarkers()
             fitToMarkers()
             
-        } else
+        } else {
             setContent([])
+            showMarkers()
+        }
         return
     }, [parkings])
 
     const handleTextSubmit = (search: string) => {
         if(search != "") {
-            setDrawerContent(<Preferences setResults={(data) => handleApiResults(data)} onScrollviewAtStart={setDrawerDisabled} destinationAddress={search} region={region} showPicker={showPicker} closeDrawer={closeControlPanel} />)
+            setDrawerContent(<Preferences setResults={(data) => handleApiResults(data)} onScrollviewAtStart={setDrawerDisabled} toggleLoadingAnimation={startLoading}  destinationAddress={search} region={camera} showPicker={showPicker} closeDrawer={closeControlPanel} />)
         }
         setDestinationAddress(search)
     }
 
     const handleEmptyTextInput = () => {
+        setDestinationMarker()
+        setParkings([])
+        setCamera({"center": { latitude: 51.0543422, longitude: 3.7274243}, "heading": 0,"pitch": 0, "zoom": 10, "altitude": 0})
         setDrawerDisabled(false)
         setDestinationAddress("")
         setMarkers([])
@@ -170,7 +219,7 @@ export default function HomeView() {
             >
                 <View style={{ flex: 1, justifyContent: 'flex-end' }} >
                     <StatusBar barStyle="dark-content"/>
-                    <MapView provider={'google'} style={styles.map2} region={region} ref={mapRef} mapPadding={{ top: 80, right: 10, bottom: 320, left: 10 }}>
+                    <MapView provider={'google'} style={styles.map2} camera={camera} ref={mapRef} mapPadding={{ top: 80, right: 10, bottom: 320, left: 10 }}>
                     {destinationMarker}
                     {markers.map((result, i) => {     
                         return (
@@ -179,6 +228,9 @@ export default function HomeView() {
                     })}
                     </MapView>
                     {content}
+                    <View style={{flex:1, display: loadingDisplay, position: 'absolute', justifyContent:'space-around', alignItems: 'center', width: '100%', height: '100%', backgroundColor: '#FFF', opacity: 0.5}} >
+                        <ActivityIndicator animating={isLoading} size="large" color="#000" />
+                    </View>
                 </View>
             </Drawer>
             <QuickPicker/>

@@ -74,12 +74,13 @@ export default function Preferences(props) {
     }
 
     const handlePreferencesSubmit = async() => {
+        props.toggleLoadingAnimation()
         addSearchToHistory()
 
         let data = {
             "destinationGeo": {
-                "long": props.region.longitude,
-                "lat": props.region.latitude
+                "long": props.region.center.longitude,
+                "lat": props.region.center.latitude
             },
             "userId": "",
             "settings": {

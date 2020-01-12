@@ -34,7 +34,7 @@ export default class Parkings extends React.Component{
                         <Text style={styles.heading}>{item.item.name}</Text>
                         <Text>{address}</Text>
                     </View>
-                    <TouchableOpacity style={styles.routeButton} onPress={() => openWaze(address)}>
+                    <TouchableOpacity style={styles.routeButton} onPress={() => this.openWaze(address)}>
                         <Image style={{width: 36, height: 43}} source={require('../assets/routeBtn.png')}/>
                     </TouchableOpacity>
                 </View>
