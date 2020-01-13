@@ -93,7 +93,7 @@ export default function Preferences(props) {
             }
         }
 
-        fetch("http://192.168.5.136:8080/api/v1/searchparkingspots",
+        fetch("http://10.130.2.243:8080/api/v1/searchparkingspots",
         {
             method: 'POST',
             body: JSON.stringify(data),

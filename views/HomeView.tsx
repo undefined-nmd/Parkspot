@@ -168,7 +168,7 @@ export default function HomeView() {
             
         } else {
             setContent([])
-            showMarkers()
+            //showMarkers()
         }
         return
     }, [parkings])
@@ -183,12 +183,12 @@ export default function HomeView() {
     const handleEmptyTextInput = () => {
         setDestinationMarker()
         setParkings([])
-        setCamera({"center": { latitude: 51.0543422, longitude: 3.7274243}, "heading": 0,"pitch": 0, "zoom": 10, "altitude": 0})
         setDrawerDisabled(false)
         setDestinationAddress("")
         setMarkers([])
         setDrawerContent(<History onScrollviewAtStart={setDrawerDisabled} onPressSearch={handleTextSubmit}/>)
         setContent(null)
+        setCamera({"center": { latitude: 51.0543422, longitude: 3.7274243}, "heading": 0,"pitch": 0, "zoom": 10, "altitude": 0})
     }
 
     const [drawerContent, setDrawerContent] = React.useState( <History onScrollviewAtStart={setDrawerDisabled} onPressSearch={handleTextSubmit}/>)
